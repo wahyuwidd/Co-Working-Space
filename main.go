@@ -19,6 +19,7 @@ type Review struct {
 }
 
 // var spacs []Space
+var reviews []Review
 
 var spaces = []Space{
 	{
@@ -97,16 +98,40 @@ func TampilSpace() {
 		return
 	}
 
-	fmt.Printf("%-4s %-10s %-10s %-20s %-15s\n", "No", "Nama", "Lokasi", "Fasilitas", "Harga")
+	fmt.Printf("%-4s %-15s %-15s %-25s %-10s %-8s %-40s\n", "No", "Nama", "Lokasi", "Fasilitas", "Harga", "Rating", "Komentar")
 
 	for i := 0; i < len(spaces); i++ {
 		space := spaces[i]
-		fmt.Printf("%-4d %-10s %-10s %-20s %-15d\n",
+		var total float64
+		var jumlah int
+		var rataRating float64
+		var komentar string
+
+		for j := 0; j < len(space.Ulasan); j++ {
+			total += space.Ulasan[j].Rating
+			jumlah++
+			if space.Ulasan[j].Komentar != "" {
+				if komentar != "" {
+					komentar += ", "
+				}
+				komentar += space.Ulasan[j].Komentar
+			}
+		}
+
+		if jumlah > 0 {
+			rataRating = total / float64(jumlah)
+		} else {
+			rataRating = 0.0
+		}
+
+		fmt.Printf("%-4d %-15s %-15s %-25s %-10d %-8.1f %-40s\n",
 			i+1,
 			space.Nama,
 			space.Lokasi,
 			strings.Join(space.Fasilitas, ","),
-			space.Harga)
+			space.Harga,
+			rataRating,
+			komentar)
 	}
 }
 
@@ -256,16 +281,9 @@ func main() {
 			fmt.Println("----------------------------------------")
 			fmt.Println("Pilihan tidak valid!")
 			fmt.Println("----------------------------------------")
+			main()
 		}
 	}
-}
-
-func Searching() {
-
-}
-
-func Sorting() {
-
 }
 
 func ManajemenPengguna() {
@@ -278,7 +296,10 @@ func ManajemenPengguna() {
 		fmt.Println()
 
 		fmt.Println("Silahkan pilih menu:")
-		fmt.Println("[1] Cari Tempat Co Working Space")
+		fmt.Println("[1] Cari Co Working Space")
+		fmt.Println("[2] Urutkan Co Working Space")
+		fmt.Println("[3] Review Co Working Space")
+		fmt.Println("[4] Filter berdasarkan Fasilitas")
 		fmt.Println("[0] Kembali")
 		fmt.Print("Pilih menu:> ")
 		fmt.Scan(&pilihan)
@@ -286,7 +307,367 @@ func ManajemenPengguna() {
 		case 0:
 			main()
 		case 1:
-			// CariSpace()
+			CariSpace()
+		case 2:
+			UrutkanSpace()
+		case 3:
+			RatingSpace()
+		case 4:
+			FilterFasilitas()
+		}
+
+	}
+}
+
+func CariSpace() {
+	var pilihan int
+	fmt.Println("Silahkan pilih pencarian:")
+	fmt.Println("1. Cari berdasarkan Nama (Sequential Search)")
+	fmt.Println("2. Cari berdasarkan Lokasi (Binary Search)")
+	fmt.Println("0. Kembali")
+	fmt.Print("Pilih menu:> ")
+	fmt.Scan(&pilihan)
+	switch pilihan {
+	case 0:
+		ManajemenPengguna()
+	case 1:
+		CariNamaSpace()
+	case 2:
+		CariLokasiSpace()
+
+	default:
+		fmt.Println("----------------------------------------")
+		fmt.Println("Pilihan tidak valid!")
+		fmt.Println("----------------------------------------")
+	}
+}
+
+func CariNamaSpace() {
+	var space Space
+	var cari string
+	fmt.Print("Masukkan nama co-working space yang ingin dicari: ")
+	fmt.Scan(&cari)
+
+	for i := 0; i < len(spaces); i++ {
+		if spaces[i].Nama == cari {
+			space = spaces[i]
+			fmt.Println()
+			fmt.Println("Co-working space ditemukan")
+			fmt.Println("-----------------------")
+			fmt.Println("Nama:", space.Nama)
+			fmt.Println("Lokasi:", space.Lokasi)
+			fmt.Println("Fasilitas:", strings.Join(space.Fasilitas, ","))
+			fmt.Println("Harga:", space.Harga)
 		}
 	}
+
+	if space.Nama == "" {
+		fmt.Println("Co-working space tidak ditemukan.")
+	}
+}
+
+func CariLokasiSpace() {
+	var space Space
+	var cari string
+	fmt.Print("Masukkan lokasi co-working space yang ingin dicari: ")
+	fmt.Scan(&cari)
+
+	left := 0
+	right := len(spaces) - 1
+	for left <= right {
+		mid := (left + right) / 2
+		if spaces[mid].Lokasi == cari {
+			space = spaces[mid]
+			fmt.Println()
+			fmt.Println("Co-working space ditemukan: ")
+			fmt.Println("-----------------------")
+			fmt.Println("Nama:", space.Nama)
+			fmt.Println("Lokasi:", space.Lokasi)
+			fmt.Println("Fasilitas:", space.Fasilitas)
+			fmt.Println("Harga:", space.Harga)
+			break
+		} else if spaces[mid].Lokasi < cari {
+			left = mid + 1
+		} else {
+			right = mid - 1
+		}
+	}
+
+	if space.Lokasi == "" {
+		fmt.Println("Co-working space tidak ditemukan.")
+	}
+}
+
+func UrutkanSpace() {
+	var pilihan int
+	fmt.Println("Pilih pengurutan berdasarkan:")
+	fmt.Println("1. Berdasarkan Harga Sewa ")
+	fmt.Println("2. Berdasarkan Rating Tertinggi")
+	fmt.Println("0. Kembali")
+	fmt.Print("Masukkan pilihan: ")
+	fmt.Scan(&pilihan)
+	switch pilihan {
+	case 0:
+		ManajemenPengguna()
+	case 1:
+		selectionSort()
+	case 2:
+		insertionSort()
+	default:
+		fmt.Println("----------------------------------------")
+		fmt.Println("Pilihan tidak valid!")
+		fmt.Println("----------------------------------------")
+	}
+}
+
+func selectionSort() {
+	var min int
+	for i := 0; i < len(spaces); i++ {
+		min = i
+		for j := i + 1; j < len(spaces); j++ {
+			if spaces[j].Harga < spaces[min].Harga {
+				min = j
+			}
+		}
+		spaces[i], spaces[min] = spaces[min], spaces[i]
+	}
+
+	fmt.Println("--------------------------------------------------------")
+	fmt.Println("Space berhasil diurutkan berdasarkan harga sewa!")
+	fmt.Println("--------------------------------------------------------")
+}
+
+func insertionSort() {
+	for i := 1; i < len(spaces); i++ {
+		j := i
+		for j > 0 && rataRataRating(spaces[j]) > rataRataRating(spaces[j-1]) {
+			spaces[j], spaces[j-1] = spaces[j-1], spaces[j]
+			j--
+		}
+	}
+
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("Spaces berhasil diurutkan berdasarkan rating tertinggi!")
+	fmt.Println("----------------------------------------------------")
+}
+
+func rataRataRating(s Space) float64 {
+	if len(s.Ulasan) == 0 {
+		return 0
+	}
+	var total float64
+	for i := 0; i < len(s.Ulasan); i++ {
+		total += s.Ulasan[i].Rating
+	}
+	return total / float64(len(s.Ulasan))
+}
+
+func RatingSpace() {
+	var menu int
+	fmt.Println("=============================================")
+	fmt.Println("  Selamat datang di Review Co Working Space  ")
+	fmt.Println("=============================================")
+	fmt.Println("Silahkan pilih menu")
+	fmt.Println("[1] Memberikan Review")
+	fmt.Println("[2] Mengubah Review")
+	fmt.Println("[3] Menghapus Review")
+	fmt.Println("[0] Kembali")
+	fmt.Print("Pilih menu: ")
+	fmt.Scan(&menu)
+
+	switch menu {
+	case 0:
+		ManajemenPengguna()
+	case 1:
+		TambahReview()
+	case 2:
+		UbahReview()
+	case 3:
+		HapusReview()
+	case 4:
+		main()
+	default:
+		fmt.Println("----------------------------------------")
+		fmt.Println("Pilihan tidak valid!")
+		fmt.Println("----------------------------------------")
+	}
+}
+
+func TambahReview() {
+	var pilihan int
+	var r Review
+
+	if len(spaces) == 0 {
+		fmt.Println("Daftar co-working space kosong, silahkan tambahkan co-working space terlebih dahulu!")
+		return
+	}
+
+	TampilSpace()
+	fmt.Println()
+	fmt.Print("Masukkan nomor co-working space : ")
+	fmt.Scan(&pilihan)
+
+	fmt.Print("Masukkan rating (1-5)		: ")
+	fmt.Scan(&r.Rating)
+	if r.Rating < 1 || r.Rating > 5 {
+		fmt.Println("Rating harus diantara 1-5")
+		return
+	}
+
+	fmt.Print("Masukkan komentar		: ")
+	fmt.Scan(&r.Komentar)
+	if r.Komentar == "" {
+		fmt.Println("Komentar tidak boleh kosong")
+		return
+	}
+
+	spaces[pilihan-1].Ulasan = append(spaces[pilihan-1].Ulasan, r)
+	fmt.Println("----------------------------------------")
+	fmt.Println("Review berhasil ditambahkan!")
+	fmt.Println("----------------------------------------")
+
+}
+
+func UbahReview() {
+	var noSpace, noReview int
+	var RatingBaru float64
+	var KomentarBaru string
+
+	if len(spaces) == 0 {
+		fmt.Println("Daftar co-working space kosong, silakan tambahkan terlebih dahulu!")
+		return
+	}
+
+	for i := 0; i < len(spaces); i++ {
+		fmt.Printf("%d. %s\n", i+1, spaces[i].Nama)
+	}
+
+	fmt.Print("Pilih nomor co-working space: ")
+	fmt.Scan(&noSpace)
+
+	if noSpace < 1 || noSpace > len(spaces) {
+		fmt.Println("Nomor tidak valid.")
+		return
+	}
+
+	space := &spaces[noSpace-1]
+
+	if len(space.Ulasan) == 0 {
+		fmt.Println("Belum ada review untuk co-working space ini.")
+		return
+	}
+
+	fmt.Println("Daftar review:")
+	for i := 0; i < len(space.Ulasan); i++ {
+		fmt.Printf("%d. Rating: %.1f | Komentar: %s\n", i+1, space.Ulasan[i].Rating, space.Ulasan[i].Komentar)
+	}
+
+	fmt.Print("Pilih nomor review yang ingin diubah: ")
+	fmt.Scan(&noReview)
+
+	if noReview < 1 || noReview > len(space.Ulasan) {
+		fmt.Println("Nomor review tidak valid.")
+		return
+	}
+
+	fmt.Print("Masukkan rating baru (1-5): ")
+	fmt.Scan(&RatingBaru)
+	if RatingBaru < 1 || RatingBaru > 5 {
+		fmt.Println("Rating harus di antara 1-5.")
+		return
+	}
+
+	fmt.Print("Masukkan komentar baru: ")
+	fmt.Scan(&KomentarBaru)
+	if KomentarBaru == "" {
+		fmt.Println("Komentar tidak boleh kosong.")
+		return
+	}
+
+	space.Ulasan[noReview-1].Rating = RatingBaru
+	space.Ulasan[noReview-1].Komentar = KomentarBaru
+
+	fmt.Println("----------------------------------------")
+	fmt.Println("Review berhasil diubah!")
+	fmt.Println("----------------------------------------")
+}
+
+func HapusReview() {
+	var noSpace, noReview int
+	space := &spaces[noSpace-1]
+
+	if len(spaces) == 0 {
+		fmt.Println("Daftar co-working space kosong, silakan tambahkan terlebih dahulu!")
+		return
+	}
+	fmt.Println("Daftar Co-Working Space:")
+	for i := 0; i < len(spaces); i++ {
+		fmt.Printf("%d. %s\n", i+1, spaces[i].Nama)
+	}
+
+	fmt.Print("Masukkan nomor co-working space: ")
+	fmt.Scan(&noSpace)
+	if noSpace < 1 || noSpace > len(spaces) {
+		fmt.Println("Nomor space tidak valid.")
+		return
+	}
+
+	if len(space.Ulasan) == 0 {
+		fmt.Println("Belum ada review untuk co-working space ini.")
+		return
+	}
+	fmt.Println("Daftar review:")
+	for i := 0; i < len(space.Ulasan); i++ {
+		fmt.Printf("%d. Rating: %.1f | Komentar: %s\n", i+1, space.Ulasan[i].Rating, space.Ulasan[i].Komentar)
+	}
+
+	fmt.Print("Masukkan nomor review yang ingin dihapus: ")
+	fmt.Scan(&noReview)
+	if noReview < 1 || noReview > len(space.Ulasan) {
+		fmt.Println("Nomor review tidak valid.")
+		return
+	}
+
+	index := noReview - 1
+	space.Ulasan = append(space.Ulasan[:index], space.Ulasan[index+1:]...)
+	fmt.Println("----------------------------------------")
+	fmt.Println("Review berhasil dihapus!")
+	fmt.Println("----------------------------------------")
+}
+
+func FilterFasilitas() {
+	var fasilitas string
+	fmt.Print("Masukkan fasilitas yang ingin dicari: ")
+	fmt.Scan(&fasilitas)
+
+	sesuai := filterByFasilitas(fasilitas)
+
+	if len(sesuai) == 0 {
+		fmt.Println("Tidak ada co-working space dengan fasilitas tersebut.")
+		return
+	}
+
+	fmt.Println("\nCo-working space dengan fasilitas", fasilitas+":")
+	for i := 0; i < len(sesuai); i++ {
+		space := sesuai[i]
+		fmt.Println("Nama:", space.Nama)
+		fmt.Println("Lokasi:", space.Lokasi)
+		fmt.Println("Fasilitas:", strings.Join(space.Fasilitas, ", "))
+		fmt.Println("Harga:", space.Harga)
+		fmt.Println("----------------------------------------")
+	}
+}
+
+func filterByFasilitas(fasilitas string) []Space {
+	var hasil []Space
+
+	for i := 0; i < len(spaces); i++ {
+		for j := 0; j < len(spaces[i].Fasilitas); j++ {
+			if strings.ToLower(spaces[i].Fasilitas[j]) == strings.ToLower(fasilitas) {
+				hasil = append(hasil, spaces[i])
+				break
+			}
+		}
+	}
+	return hasil
 }
